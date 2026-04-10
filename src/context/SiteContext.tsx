@@ -23,6 +23,7 @@ const defaultSettings: SiteSettings = {
   kakaoUrl: 'https://open.kakao.com/o/s388apqh', // Placeholder
   instagramUrl: 'https://www.threads.com/@boheampago',
   youtubeUrl: 'https://www.youtube.com/channel/UCelEDbkccWmSDJNW-6jniqA',
+  adminPassword: 'admin1234',
 };
 
 const initialPosts: Post[] = [

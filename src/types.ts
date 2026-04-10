@@ -18,6 +18,7 @@ export interface SiteSettings {
   kakaoUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  adminPassword?: string;
 }
 
 export interface ContactInquiry {

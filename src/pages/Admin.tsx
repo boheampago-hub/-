@@ -12,7 +12,9 @@ import {
   Image as ImageIcon,
   CheckCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useSite } from '../context/SiteContext';
 import { Post, SiteSettings, ContactInquiry } from '../types';
@@ -35,22 +37,21 @@ const Admin: React.FC = () => {
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('admin_logged_in') === 'true');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple password check - in a real app, this would be a server-side check
-    // Note: Vite only exposes variables prefixed with VITE_ to the client
-    const envPassword = import.meta.env.VITE_ADMIN_PASSWORD;
-    const adminPassword = (envPassword && envPassword.trim()) || 'admin1234';
+    
+    // Use password from settings (persisted in localStorage via SiteContext)
+    const adminPassword = settings.adminPassword || 'admin1234';
     
     if (password.trim() === adminPassword) {
       setIsLoggedIn(true);
       localStorage.setItem('admin_logged_in', 'true');
       setError('');
     } else {
-      setError('비밀번호가 일치하지 않습니다. (기본값: admin1234)');
-      console.log('Login failed. If you set a custom password, ensure it starts with VITE_ in the Secrets panel.');
+      setError('비밀번호가 일치하지 않습니다.');
     }
   };
 
@@ -78,14 +79,23 @@ const Admin: React.FC = () => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700">비밀번호</label>
-              <input 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition-all pr-12"
+                  placeholder="••••••••"
+                  required
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
             </div>
             <button 
@@ -115,6 +125,7 @@ const Admin: React.FC = () => {
       kakaoUrl: formData.get('kakaoUrl') as string,
       instagramUrl: formData.get('instagramUrl') as string,
       youtubeUrl: formData.get('youtubeUrl') as string,
+      adminPassword: formData.get('adminPassword') as string,
     };
     updateSettings(updates);
     alert('설정이 저장되었습니다.');
@@ -486,6 +497,30 @@ const Admin: React.FC = () => {
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-700">유튜브 URL</label>
                         <input name="youtubeUrl" type="text" defaultValue={settings.youtubeUrl} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="https://youtube.com/..." />
+                      </div>
+                      <div className="space-y-2 pt-4">
+                        <h3 className="text-lg font-bold text-gray-900 border-b pb-4">관리자 보안</h3>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">새 비밀번호</label>
+                            <div className="relative">
+                              <input 
+                                name="adminPassword" 
+                                type={showPassword ? "text" : "password"} 
+                                defaultValue={settings.adminPassword} 
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none pr-12" 
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                              >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">비밀번호를 변경하면 다음 로그인부터 적용됩니다. 눈 아이콘을 클릭하여 입력한 비밀번호를 확인할 수 있습니다.</p>
+                        </div>
                       </div>
                     </div>
                     <div className="space-y-6">
