@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 const canvasAppId = 'boheompago-app';
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(finalConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -76,126 +76,101 @@ const initialPosts: Post[] = [
   },
 ];
 
-export const useSite = () => {
-  const context = useContext(SiteContext);
-  if (!context) throw new Error('useSite must be used within a SiteProvider');
-  return context;
-};
+const defaultPosts: Post[] = [];
+
+const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any>(null);
-  
-  // 상태 관리 (로컬 스토리지가 아닌 이 상태들을 Firebase와 동기화합니다)
-  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
-  const [posts, setPosts] = useState<Post[]>(defaultPosts);
-  const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
+  const [settings, setSettings] = useState<SiteSettings>(() => {
+    try {
+      const saved = localStorage.getItem('site_settings');
+      return saved ? JSON.parse(saved) : defaultSettings;
+    } catch (e) {
+      console.error('Failed to load settings from localStorage', e);
+      return defaultSettings;
+    }
+  });
+  const [posts, setPosts] = useState<Post[]>(() => {
+    try {
+      const saved = localStorage.getItem('site_posts');
+      const loadedPosts = saved ? JSON.parse(saved) : initialPosts;
+      return Array.isArray(loadedPosts) 
+        ? loadedPosts.sort((a: Post, b: Post) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        : initialPosts;
+    } catch (e) {
+      console.error('Failed to load posts from localStorage', e);
+      return initialPosts;
+    }
+  });
+  const [inquiries, setInquiries] = useState<ContactInquiry[]>(() => {
+    try {
+      const saved = localStorage.getItem('site_inquiries');
+      const loaded = saved ? JSON.parse(saved) : [];
+      return Array.isArray(loaded) ? loaded : [];
+    } catch (e) {
+      console.error('Failed to load inquiries from localStorage', e);
+      return [];
+    }
+  });
 
-  // 1. 사용자 인증 (Firestore 보안 규칙 대응)
+  // Persist to localStorage
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        console.error("Firebase Auth Error:", error);
-      }
-    };
-    initAuth();
+    localStorage.setItem('site_settings', JSON.stringify(settings));
+  }, [settings]);
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+  useEffect(() => {
+    localStorage.setItem('site_posts', JSON.stringify(posts));
+  }, [posts]);
+
+  useEffect(() => {
+    localStorage.setItem('site_inquiries', JSON.stringify(inquiries));
+  }, [inquiries]);
+
+  // Apply theme color to CSS variable
+  useEffect(() => {
+    document.documentElement.style.setProperty('--point-color', settings.pointColor);
+    document.documentElement.style.setProperty('--font-family', settings.fontFamily);
+  }, [settings.pointColor, settings.fontFamily]);
+
+  const updateSettings = (newSettings: Partial<SiteSettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  };
+
+  const addPost = (postData: Omit<Post, 'id'>) => {
+    const newPost: Post = {
+      ...postData,
+      id: Date.now().toString(),
+      date: postData.date || new Date().toISOString().split('T')[0],
+    };
+    setPosts(prev => {
+      const newList = [newPost, ...prev];
+      return newList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     });
-    return () => unsubscribe();
-  }, []);
-
-  // 2. Firebase 실시간 데이터 구독 (수정 즉시 화면 반영)
-  useEffect(() => {
-    if (!user) return; // 인증되지 않으면 데이터를 부르지 않음
-
-    // 설정(Settings) 실시간 연결
-    const settingsRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'settings', 'main');
-    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setSettings(docSnap.data() as SiteSettings);
-      } else {
-        setDoc(settingsRef, defaultSettings); // 최초 세팅
-      }
-    }, (err) => console.error("Settings Load Error:", err));
-
-    // 게시물(Posts/Cases) 실시간 연결
-    const postsRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'posts');
-    const unsubPosts = onSnapshot(postsRef, (querySnap) => {
-      const fetchedPosts: Post[] = [];
-      querySnap.forEach(doc => {
-        fetchedPosts.push({ id: doc.id, ...doc.data() } as Post);
-      });
-      // 최신순 정렬
-      fetchedPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setPosts(fetchedPosts);
-    }, (err) => console.error("Posts Load Error:", err));
-
-    // 문의 내역(Inquiries) 실시간 연결
-    const inquiriesRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'inquiries');
-    const unsubInquiries = onSnapshot(inquiriesRef, (querySnap) => {
-      const fetchedInquiries: ContactInquiry[] = [];
-      querySnap.forEach(doc => {
-        fetchedInquiries.push({ id: doc.id, ...doc.data() } as ContactInquiry);
-      });
-      // 최신순 정렬
-      fetchedInquiries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setInquiries(fetchedInquiries);
-    }, (err) => console.error("Inquiries Load Error:", err));
-
-    // 컴포넌트가 언마운트될 때 리스너 해제
-    return () => {
-      unsubSettings();
-      unsubPosts();
-      unsubInquiries();
-    };
-  }, [user]);
-
-  // 3. 데이터를 DB에 저장하는 함수들
-  const updateSettings = async (newSettings: Partial<SiteSettings>) => {
-    if (!user) return;
-    const settingsRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'settings', 'main');
-    await setDoc(settingsRef, newSettings, { merge: true });
   };
 
-  const addPost = async (postData: Omit<Post, 'id'>) => {
-    if (!user) return;
-    const postsRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'posts');
-    await addDoc(postsRef, postData);
+  const updatePost = (id: string, postData: Partial<Post>) => {
+    setPosts(prev => {
+      const updated = prev.map(p => p.id === id ? { ...p, ...postData } : p);
+      return updated.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
   };
 
-  const updatePost = async (id: string, postData: Partial<Post>) => {
-    if (!user) return;
-    const postRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'posts', id);
-    await updateDoc(postRef, postData);
+  const deletePost = (id: string) => {
+    setPosts(prev => prev.filter(p => p.id !== id));
   };
 
-  const deletePost = async (id: string) => {
-    if (!user) return;
-    const postRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'posts', id);
-    await deleteDoc(postRef);
-  };
-
-  const addInquiry = async (inquiryData: Omit<ContactInquiry, 'id' | 'date' | 'status'>) => {
-    if (!user) return;
-    const inquiriesRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'inquiries');
-    await addDoc(inquiriesRef, {
+  const addInquiry = (inquiryData: Omit<ContactInquiry, 'id' | 'date' | 'status'>) => {
+    const newInquiry: ContactInquiry = {
       ...inquiryData,
+      id: Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
-      status: 'new'
-    });
+      status: 'new',
+    };
+    setInquiries(prev => [newInquiry, ...prev]);
   };
 
-  const updateInquiryStatus = async (id: string, status: ContactInquiry['status']) => {
-    if (!user) return;
-    const inquiryRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'inquiries', id);
-    await updateDoc(inquiryRef, { status });
+  const updateInquiryStatus = (id: string, status: ContactInquiry['status']) => {
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
   };
 
   return (
@@ -213,4 +188,12 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </SiteContext.Provider>
   );
+};
+
+export const useSite = () => {
+  const context = useContext(SiteContext);
+  if (context === undefined) {
+    throw new Error('useSite must be used within a SiteProvider');
+  }
+  return context;
 };
