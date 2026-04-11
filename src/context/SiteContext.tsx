@@ -1,6 +1,30 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Post, SiteSettings, ContactInquiry } from '../types';
-
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, doc, setDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+const firebaseConfig = {
+  apiKey: "AIzaSyALnxE0MRaudPrQ7CbqGsYKGHTCeuMFrp0",
+  authDomain: "boheampago-de893.firebaseapp.com",
+  projectId: "boheampago-de893",
+  storageBucket: "boheampago-de893.firebasestorage.app",
+  messagingSenderId: "330850678315",
+  appId: "1:330850678315:web:02f57ae955b74463549c6e",
+  measurementId: "G-ZXV0VHFDTR"
+};
+let finalConfig = firebaseConfig;
+let canvasAppId = 'boheompago-app';
+try {
+  if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+    finalConfig = JSON.parse(__firebase_config);
+  }
+  if (typeof __app_id !== 'undefined' && __app_id) {
+    canvasAppId = __app_id;
+  }
+} catch (e) {}
+const app = initializeApp(finalConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 interface SiteContextType {
   settings: SiteSettings;
   posts: Post[];
