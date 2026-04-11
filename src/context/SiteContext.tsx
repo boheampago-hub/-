@@ -1,8 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Post, SiteSettings, ContactInquiry } from '../types';
+
+// Firebase 연결을 위한 필수 모듈 임포트
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, setDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+
+// ==========================================
+// [중요] Firebase 설정 영역
+// 본인의 실제 Firebase 프로젝트 정보입니다.
+// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyALnxE0MRaudPrQ7CbqGsYKGHTCeuMFrp0",
   authDomain: "boheampago-de893.firebaseapp.com",
@@ -13,17 +20,12 @@ const firebaseConfig = {
   measurementId: "G-ZXV0VHFDTR"
 };
 
-let finalConfig = firebaseConfig;
-let canvasAppId = 'boheompago-app';
-try {
-  if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-    finalConfig = JSON.parse(__firebase_config);
-  }
-  if (typeof __app_id !== 'undefined' && __app_id) {
-    canvasAppId = __app_id;
-  }
-} catch (e) {}
-const app = initializeApp(finalConfig);
+// 데이터베이스 내 저장 폴더(경로) 고정
+// AI Studio 우회 코드를 삭제하고, 항상 정식 창고만 바라보도록 수정
+const canvasAppId = 'boheompago-app';
+
+// Firebase 앱, 인증, DB 초기화
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -39,142 +41,143 @@ interface SiteContextType {
   updateInquiryStatus: (id: string, status: ContactInquiry['status']) => void;
 }
 
+// DB에 데이터가 없을 때 띄워줄 기본값 세팅
 const defaultSettings: SiteSettings = {
   name: '보험파고',
   heroTitle: '분석의 깊이가 보상의 크기를 결정합니다.',
   heroSubtitle: '15년 경력의 보험보상 전문가가 당신의 곁에서 함께합니다.',
-  pointColor: '#064E3B', // Deep Forest Green
+  pointColor: '#064E3B', 
   fontFamily: 'Pretendard, Noto Sans KR, sans-serif',
   logoUrl: 'https://picsum.photos/seed/logo/200/60',
-  kakaoUrl: 'https://open.kakao.com/o/s388apqh', // Placeholder
+  kakaoUrl: 'https://open.kakao.com/o/s388apqh', 
   instagramUrl: 'https://www.threads.com/@boheampago',
-  youtubeUrl: 'https://www.youtube.com/channel/UCelEDbkccWmSDJNW-6jniqA',
-  adminPassword: 'admin1234',
+  youtubeUrl: 'https://www.youtube.com/'
 };
 
-const initialPosts: Post[] = [
-  {
-    id: '1',
-    title: '교통사고 합의금, 절대 먼저 제시하지 마세요',
-    content: '교통사고 발생 시 보험사에서 제시하는 합의금은 대개 최소 수준입니다. 전문가의 조언 없이 섣불리 합의하면 정당한 보상을 받지 못할 수 있습니다...',
-    category: 'compensation',
-    date: '2024-05-10',
-    imageUrl: 'https://picsum.photos/seed/car-accident/800/400',
-    externalUrl: 'https://blog.naver.com',
-  },
-  {
-    id: '2',
-    title: '숨은 보험금 3천만 원 찾아준 사례',
-    content: '오래전 가입했던 보험에서 지급되지 않았던 후유장해 보험금을 찾아드린 사례입니다. 고객님께서는 전혀 모르고 계셨던 권리를 되찾아 드렸습니다.',
-    category: 'compensation',
-    date: '2024-05-08',
-    imageUrl: 'https://picsum.photos/seed/money/800/400',
-    externalUrl: 'https://blog.naver.com',
-  },
-  {
-    id: '3',
-    title: '암 진단비 분쟁, 어떻게 대처해야 할까?',
-    content: '보험사에서 암 진단비 지급을 거절하는 경우가 많습니다. 조직검사 결과지 분석을 통해 정당한 암 진단비를 수령한 성공 사례를 소개합니다.',
-    category: 'analysis',
-    date: '2024-05-05',
-    imageUrl: 'https://picsum.photos/seed/hospital/800/400',
-    externalUrl: 'https://blog.naver.com',
-  },
-];
+const defaultPosts: Post[] = []; // DB에서 불러올 예정이므로 초기값은 빈 배열
 
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
+export const useSite = () => {
+  const context = useContext(SiteContext);
+  if (!context) throw new Error('useSite must be used within a SiteProvider');
+  return context;
+};
+
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<SiteSettings>(() => {
-    try {
-      const saved = localStorage.getItem('site_settings');
-      return saved ? JSON.parse(saved) : defaultSettings;
-    } catch (e) {
-      console.error('Failed to load settings from localStorage', e);
-      return defaultSettings;
-    }
-  });
-  const [posts, setPosts] = useState<Post[]>(() => {
-    try {
-      const saved = localStorage.getItem('site_posts');
-      const loadedPosts = saved ? JSON.parse(saved) : initialPosts;
-      return Array.isArray(loadedPosts) 
-        ? loadedPosts.sort((a: Post, b: Post) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        : initialPosts;
-    } catch (e) {
-      console.error('Failed to load posts from localStorage', e);
-      return initialPosts;
-    }
-  });
-  const [inquiries, setInquiries] = useState<ContactInquiry[]>(() => {
-    try {
-      const saved = localStorage.getItem('site_inquiries');
-      const loaded = saved ? JSON.parse(saved) : [];
-      return Array.isArray(loaded) ? loaded : [];
-    } catch (e) {
-      console.error('Failed to load inquiries from localStorage', e);
-      return [];
-    }
-  });
+  const [user, setUser] = useState<any>(null);
+  
+  // 상태 관리 (로컬 스토리지가 아닌 이 상태들을 Firebase와 동기화합니다)
+  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
+  const [posts, setPosts] = useState<Post[]>(defaultPosts);
+  const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
 
-  // Persist to localStorage
+  // 1. 사용자 인증 (Firestore 보안 규칙 대응)
   useEffect(() => {
-    localStorage.setItem('site_settings', JSON.stringify(settings));
-  }, [settings]);
-
-  useEffect(() => {
-    localStorage.setItem('site_posts', JSON.stringify(posts));
-  }, [posts]);
-
-  useEffect(() => {
-    localStorage.setItem('site_inquiries', JSON.stringify(inquiries));
-  }, [inquiries]);
-
-  // Apply theme color to CSS variable
-  useEffect(() => {
-    document.documentElement.style.setProperty('--point-color', settings.pointColor);
-    document.documentElement.style.setProperty('--font-family', settings.fontFamily);
-  }, [settings.pointColor, settings.fontFamily]);
-
-  const updateSettings = (newSettings: Partial<SiteSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-  };
-
-  const addPost = (postData: Omit<Post, 'id'>) => {
-    const newPost: Post = {
-      ...postData,
-      id: Date.now().toString(),
-      date: postData.date || new Date().toISOString().split('T')[0],
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Firebase Auth Error:", error);
+      }
     };
-    setPosts(prev => {
-      const newList = [newPost, ...prev];
-      return newList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    initAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
     });
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Firebase 실시간 데이터 구독 (수정 즉시 화면 반영)
+  useEffect(() => {
+    if (!user) return; // 인증되지 않으면 데이터를 부르지 않음
+
+    // 설정(Settings) 실시간 연결
+    const settingsRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'settings', 'main');
+    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings(docSnap.data() as SiteSettings);
+      } else {
+        setDoc(settingsRef, defaultSettings); // 최초 세팅
+      }
+    }, (err) => console.error("Settings Load Error:", err));
+
+    // 게시물(Posts/Cases) 실시간 연결
+    const postsRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'posts');
+    const unsubPosts = onSnapshot(postsRef, (querySnap) => {
+      const fetchedPosts: Post[] = [];
+      querySnap.forEach(doc => {
+        fetchedPosts.push({ id: doc.id, ...doc.data() } as Post);
+      });
+      // 최신순 정렬
+      fetchedPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setPosts(fetchedPosts);
+    }, (err) => console.error("Posts Load Error:", err));
+
+    // 문의 내역(Inquiries) 실시간 연결
+    const inquiriesRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'inquiries');
+    const unsubInquiries = onSnapshot(inquiriesRef, (querySnap) => {
+      const fetchedInquiries: ContactInquiry[] = [];
+      querySnap.forEach(doc => {
+        fetchedInquiries.push({ id: doc.id, ...doc.data() } as ContactInquiry);
+      });
+      // 최신순 정렬
+      fetchedInquiries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setInquiries(fetchedInquiries);
+    }, (err) => console.error("Inquiries Load Error:", err));
+
+    // 컴포넌트가 언마운트될 때 리스너 해제
+    return () => {
+      unsubSettings();
+      unsubPosts();
+      unsubInquiries();
+    };
+  }, [user]);
+
+  // 3. 데이터를 DB에 저장하는 함수들
+  const updateSettings = async (newSettings: Partial<SiteSettings>) => {
+    if (!user) return;
+    const settingsRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'settings', 'main');
+    await setDoc(settingsRef, newSettings, { merge: true });
   };
 
-  const updatePost = (id: string, postData: Partial<Post>) => {
-    setPosts(prev => {
-      const updated = prev.map(p => p.id === id ? { ...p, ...postData } : p);
-      return updated.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    });
+  const addPost = async (postData: Omit<Post, 'id'>) => {
+    if (!user) return;
+    const postsRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'posts');
+    await addDoc(postsRef, postData);
   };
 
-  const deletePost = (id: string) => {
-    setPosts(prev => prev.filter(p => p.id !== id));
+  const updatePost = async (id: string, postData: Partial<Post>) => {
+    if (!user) return;
+    const postRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'posts', id);
+    await updateDoc(postRef, postData);
   };
 
-  const addInquiry = (inquiryData: Omit<ContactInquiry, 'id' | 'date' | 'status'>) => {
-    const newInquiry: ContactInquiry = {
+  const deletePost = async (id: string) => {
+    if (!user) return;
+    const postRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'posts', id);
+    await deleteDoc(postRef);
+  };
+
+  const addInquiry = async (inquiryData: Omit<ContactInquiry, 'id' | 'date' | 'status'>) => {
+    if (!user) return;
+    const inquiriesRef = collection(db, 'artifacts', canvasAppId, 'public', 'data', 'inquiries');
+    await addDoc(inquiriesRef, {
       ...inquiryData,
-      id: Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
-      status: 'new',
-    };
-    setInquiries(prev => [newInquiry, ...prev]);
+      status: 'new'
+    });
   };
 
-  const updateInquiryStatus = (id: string, status: ContactInquiry['status']) => {
-    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
+  const updateInquiryStatus = async (id: string, status: ContactInquiry['status']) => {
+    if (!user) return;
+    const inquiryRef = doc(db, 'artifacts', canvasAppId, 'public', 'data', 'inquiries', id);
+    await updateDoc(inquiryRef, { status });
   };
 
   return (
@@ -192,12 +195,4 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </SiteContext.Provider>
   );
-};
-
-export const useSite = () => {
-  const context = useContext(SiteContext);
-  if (context === undefined) {
-    throw new Error('useSite must be used within a SiteProvider');
-  }
-  return context;
 };
