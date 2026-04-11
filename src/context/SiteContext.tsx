@@ -1,23 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Post, SiteSettings, ContactInquiry } from '../types';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, doc, setDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-const firebaseConfig = {
-  apiKey: "AIzaSyALnxE0MRaudPrQ7CbqGsYKGHTCeuMFrp0",
-  authDomain: "boheampago-de893.firebaseapp.com",
-  projectId: "boheampago-de893",
-  storageBucket: "boheampago-de893.firebasestorage.app",
-  messagingSenderId: "330850678315",
-  appId: "1:330850678315:web:02f57ae955b74463549c6e",
-  measurementId: "G-ZXV0VHFDTR"
-};
-
-const canvasAppId = 'boheompago-app';
-
-const app = initializeApp(finalConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
 
 interface SiteContextType {
   settings: SiteSettings;
@@ -45,7 +27,7 @@ const defaultSettings: SiteSettings = {
 };
 
 const initialPosts: Post[] = [
-  {
+ {
     id: '1',
     title: '5세대실손 관리급여',
     content: '관리급여 관리급여란과잉진료나남용우려가있는비급여의료항목중, 국민의료비부담완화와적정의료이용유도를위해정부가건강보험체계안으로편입시켜진료기준과가격을관리하는제도입니다',
@@ -75,8 +57,6 @@ const initialPosts: Post[] = [
     externalUrl: 'https://blog.naver.com/xyman1225/224224734797',
   },
 ];
-
-const defaultPosts: Post[] = [];
 
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
