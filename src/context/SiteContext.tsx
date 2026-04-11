@@ -12,6 +12,7 @@ const firebaseConfig = {
   appId: "1:330850678315:web:02f57ae955b74463549c6e",
   measurementId: "G-ZXV0VHFDTR"
 };
+
 let finalConfig = firebaseConfig;
 let canvasAppId = 'boheompago-app';
 try {
@@ -25,6 +26,7 @@ try {
 const app = initializeApp(finalConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
 interface SiteContextType {
   settings: SiteSettings;
   posts: Post[];
