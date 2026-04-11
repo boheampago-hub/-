@@ -1,15 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Post, SiteSettings, ContactInquiry } from '../types';
-
-// Firebase 연결을 위한 필수 모듈 임포트
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, setDoc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-
-// ==========================================
-// [중요] Firebase 설정 영역
-// 본인의 실제 Firebase 프로젝트 정보입니다.
-// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyALnxE0MRaudPrQ7CbqGsYKGHTCeuMFrp0",
   authDomain: "boheampago-de893.firebaseapp.com",
@@ -20,11 +13,8 @@ const firebaseConfig = {
   measurementId: "G-ZXV0VHFDTR"
 };
 
-// 데이터베이스 내 저장 폴더(경로) 고정
-// AI Studio 우회 코드를 삭제하고, 항상 정식 창고만 바라보도록 수정
 const canvasAppId = 'boheompago-app';
 
-// Firebase 앱, 인증, DB 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -41,22 +31,50 @@ interface SiteContextType {
   updateInquiryStatus: (id: string, status: ContactInquiry['status']) => void;
 }
 
-// DB에 데이터가 없을 때 띄워줄 기본값 세팅
 const defaultSettings: SiteSettings = {
   name: '보험파고',
   heroTitle: '분석의 깊이가 보상의 크기를 결정합니다.',
   heroSubtitle: '15년 경력의 보험보상 전문가가 당신의 곁에서 함께합니다.',
-  pointColor: '#064E3B', 
+  pointColor: '#064E3B', // Deep Forest Green
   fontFamily: 'Pretendard, Noto Sans KR, sans-serif',
   logoUrl: 'https://picsum.photos/seed/logo/200/60',
-  kakaoUrl: 'https://open.kakao.com/o/s388apqh', 
+  kakaoUrl: 'https://open.kakao.com/o/s388apqh', // Placeholder
   instagramUrl: 'https://www.threads.com/@boheampago',
-  youtubeUrl: 'https://www.youtube.com/'
+  youtubeUrl: 'https://www.youtube.com/channel/UCelEDbkccWmSDJNW-6jniqA',
+  adminPassword: 'admin1234',
 };
 
-const defaultPosts: Post[] = []; // DB에서 불러올 예정이므로 초기값은 빈 배열
-
-const SiteContext = createContext<SiteContextType | undefined>(undefined);
+const initialPosts: Post[] = [
+  {
+    id: '1',
+    title: '5세대실손 관리급여',
+    content: '관리급여 관리급여란과잉진료나남용우려가있는비급여의료항목중, 국민의료비부담완화와적정의료이용유도를위해정부가건강보험체계안으로편입시켜진료기준과가격을관리하는제도입니다',
+    category: 'analysis',
+    date: '2026-03-03',
+    imageUrl: 'https://postfiles.pstatic.net/MjAyNjA0MTFfMjM5/MDAxNzc1ODgzMjM5MDEw.3ldi9rIuLpFld8uHzLwF9TtXeYP0Us0vbR3QsPC5a1Yg.Q3jNvr85lEL2ZSYooWJuZQopMjtEpbFyxGkehUjGkyEg.PNG/c26779b4-7850-4cbc-85a0-4ce64ed4dc9a.png?type=w966',
+    externalUrl: 'https://blog.naver.com/xyman1225/224202442112',
+  },
+  {
+    id: '2',
+    title: '자궁근종 하이푸(HIFU)시술에 관한 보험사의 보상문제',
+    content: '자궁근종은 자궁에서 발생하는 종양 중 가장 흔한 양성 질환으로, 자궁의 대부분을 이루고 있는 평활근에 생깁니다.
+      평활근은 자궁 내벽을 구성하는 근육 조직으로, 자궁근종은 이 근육 조직에서 비정상적인 세포의 증식으로 형성됩니다.',
+    category: 'compensation',
+    date: '2026-04-09',
+    imageUrl: 'https://postfiles.pstatic.net/MjAyNjA0MDRfMTk5/MDAxNzc1Mjg2NjI0Mjc2.jhKdUMBTiRH-VmxIKXGcF0sCDuCiYETPneFMdGGGFygg.yNq-Sr0yK98h681S1gRJbq_MFUnQunvQsvKL0T9lsm0g.PNG/2026-04-04_16;10;00.PNG?type=w966',
+    externalUrl: 'https://blog.naver.com/xyman1225/224246533623',
+  },
+  {
+    id: '3',
+    title: '수술비 보험 5세대실손',
+    content: '최근 보험 시장에서 가장 많이 이야기되는 변화 중 하나가 바로 5세대 실손의료비입니다. 
+      의료 이용이 많을수록 보험료가 크게 올라갈 수 있는 구조로 바뀌면서 많은 분들이 “실손보험만으로 충분할까?”라는 고민을 하게 되었습니다.',
+    category: 'analysis',
+    date: '2026-03-21',
+    imageUrl: 'https://postfiles.pstatic.net/MjAyNjAzMThfMTg4/MDAxNzczODE4MDA0NDAw.PFD2dWolq1c3Nv1siPpJye2uJY0YgiqwOKaLdgf-npkg.tjiLXBlkHG_bkuzDxYUTLrsZlbWgKdD97cEC-NOMbkIg.PNG/2026-03-18_16;03;59.PNG?type=w966',
+    externalUrl: 'https://blog.naver.com/xyman1225/224224734797',
+  },
+];
 
 export const useSite = () => {
   const context = useContext(SiteContext);
