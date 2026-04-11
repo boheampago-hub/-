@@ -39,8 +39,7 @@ const initialPosts: Post[] = [
   {
     id: '2',
     title: '자궁근종 하이푸(HIFU)시술에 관한 보험사의 보상문제',
-    content: '자궁근종은 자궁에서 발생하는 종양 중 가장 흔한 양성 질환으로, 자궁의 대부분을 이루고 있는 평활근에 생깁니다.
-      평활근은 자궁 내벽을 구성하는 근육 조직으로, 자궁근종은 이 근육 조직에서 비정상적인 세포의 증식으로 형성됩니다.',
+    content: '자궁근종은 자궁에서 발생하는 종양 중 가장 흔한 양성 질환으로, 자궁의 대부분을 이루고 있는 평활근에 생깁니다. 평활근은 자궁 내벽을 구성하는 근육 조직으로, 자궁근종은 이 근육 조직에서 비정상적인 세포의 증식으로 형성됩니다.',
     category: 'compensation',
     date: '2026-04-09',
     imageUrl: 'https://postfiles.pstatic.net/MjAyNjA0MDRfMTk5/MDAxNzc1Mjg2NjI0Mjc2.jhKdUMBTiRH-VmxIKXGcF0sCDuCiYETPneFMdGGGFygg.yNq-Sr0yK98h681S1gRJbq_MFUnQunvQsvKL0T9lsm0g.PNG/2026-04-04_16;10;00.PNG?type=w966',
@@ -49,8 +48,7 @@ const initialPosts: Post[] = [
   {
     id: '3',
     title: '수술비 보험 5세대실손',
-    content: '최근 보험 시장에서 가장 많이 이야기되는 변화 중 하나가 바로 5세대 실손의료비입니다. 
-      의료 이용이 많을수록 보험료가 크게 올라갈 수 있는 구조로 바뀌면서 많은 분들이 “실손보험만으로 충분할까?”라는 고민을 하게 되었습니다.',
+    content: '최근 보험 시장에서 가장 많이 이야기되는 변화 중 하나가 바로 5세대 실손의료비입니다.의료 이용이 많을수록 보험료가 크게 올라갈 수 있는 구조로 바뀌면서 많은 분들이 “실손보험만으로 충분할까?”라는 고민을 하게 되었습니다.',
     category: 'analysis',
     date: '2026-03-21',
     imageUrl: 'https://postfiles.pstatic.net/MjAyNjAzMThfMTg4/MDAxNzczODE4MDA0NDAw.PFD2dWolq1c3Nv1siPpJye2uJY0YgiqwOKaLdgf-npkg.tjiLXBlkHG_bkuzDxYUTLrsZlbWgKdD97cEC-NOMbkIg.PNG/2026-03-18_16;03;59.PNG?type=w966',
