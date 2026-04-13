@@ -21,13 +21,13 @@ const defaultSettings: SiteSettings = {
   fontFamily: 'Pretendard, Noto Sans KR, sans-serif',
   logoUrl: 'https://picsum.photos/seed/logo/200/60',
   kakaoUrl: 'https://open.kakao.com/o/s388apqh', // Placeholder
-  instagramUrl: 'https://www.threads.com/@boheampago',
+  instagramUrl: 'https://www.instagram.com/boheampago?igsh=aW9rMTB3ZTkxc244',
   youtubeUrl: 'https://www.youtube.com/channel/UCelEDbkccWmSDJNW-6jniqA',
   adminPassword: 'admin1234',
 };
 
 const initialPosts: Post[] = [
- {
+  {
     id: '1',
     title: '5세대실손 관리급여',
     content: '관리급여 관리급여란과잉진료나남용우려가있는비급여의료항목중, 국민의료비부담완화와적정의료이용유도를위해정부가건강보험체계안으로편입시켜진료기준과가격을관리하는제도입니다',
@@ -39,7 +39,7 @@ const initialPosts: Post[] = [
   {
     id: '2',
     title: '자궁근종 하이푸(HIFU)시술에 관한 보험사의 보상문제',
-    content: '자궁근종은 자궁에서 발생하는 종양 중 가장 흔한 양성 질환으로, 자궁의 대부분을 이루고 있는 평활근에 생깁니다. 평활근은 자궁 내벽을 구성하는 근육 조직으로, 자궁근종은 이 근육 조직에서 비정상적인 세포의 증식으로 형성됩니다.',
+    content: '자궁근종은 자궁에서 발생하는 종양 중 가장 흔한 양성 질환으로, 자궁의 대부분을 이루고 있는 평활근에 생깁니다.\n평활근은 자궁 내벽을 구성하는 근육 조직으로, 자궁근종은 이 근육 조직에서 비정상적인 세포의 증식으로 형성됩니다.',
     category: 'compensation',
     date: '2026-04-09',
     imageUrl: 'https://postfiles.pstatic.net/MjAyNjA0MDRfMTk5/MDAxNzc1Mjg2NjI0Mjc2.jhKdUMBTiRH-VmxIKXGcF0sCDuCiYETPneFMdGGGFygg.yNq-Sr0yK98h681S1gRJbq_MFUnQunvQsvKL0T9lsm0g.PNG/2026-04-04_16;10;00.PNG?type=w966',
@@ -48,7 +48,7 @@ const initialPosts: Post[] = [
   {
     id: '3',
     title: '수술비 보험 5세대실손',
-    content: '최근 보험 시장에서 가장 많이 이야기되는 변화 중 하나가 바로 5세대 실손의료비입니다.의료 이용이 많을수록 보험료가 크게 올라갈 수 있는 구조로 바뀌면서 많은 분들이 “실손보험만으로 충분할까?”라는 고민을 하게 되었습니다.',
+    content: '최근 보험 시장에서 가장 많이 이야기되는 변화 중 하나가 바로 5세대 실손의료비입니다. \n의료 이용이 많을수록 보험료가 크게 올라갈 수 있는 구조로 바뀌면서 많은 분들이 “실손보험만으로 충분할까?”라는 고민을 하게 되었습니다.',
     category: 'analysis',
     date: '2026-03-21',
     imageUrl: 'https://postfiles.pstatic.net/MjAyNjAzMThfMTg4/MDAxNzczODE4MDA0NDAw.PFD2dWolq1c3Nv1siPpJye2uJY0YgiqwOKaLdgf-npkg.tjiLXBlkHG_bkuzDxYUTLrsZlbWgKdD97cEC-NOMbkIg.PNG/2026-03-18_16;03;59.PNG?type=w966',
@@ -61,7 +61,7 @@ const SiteContext = createContext<SiteContextType | undefined>(undefined);
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<SiteSettings>(() => {
     try {
-      const saved = localStorage.getItem('site_settings');
+      const saved = localStorage.getItem('site_settings_v2');
       return saved ? JSON.parse(saved) : defaultSettings;
     } catch (e) {
       console.error('Failed to load settings from localStorage', e);
@@ -70,7 +70,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [posts, setPosts] = useState<Post[]>(() => {
     try {
-      const saved = localStorage.getItem('site_posts');
+      const saved = localStorage.getItem('site_posts_v2');
       const loadedPosts = saved ? JSON.parse(saved) : initialPosts;
       return Array.isArray(loadedPosts) 
         ? loadedPosts.sort((a: Post, b: Post) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -93,11 +93,11 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Persist to localStorage
   useEffect(() => {
-    localStorage.setItem('site_settings', JSON.stringify(settings));
+    localStorage.setItem('site_settings_v2', JSON.stringify(settings));
   }, [settings]);
 
   useEffect(() => {
-    localStorage.setItem('site_posts', JSON.stringify(posts));
+    localStorage.setItem('site_posts_v2', JSON.stringify(posts));
   }, [posts]);
 
   useEffect(() => {
