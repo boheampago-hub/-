@@ -37,7 +37,7 @@ const Home: React.FC = () => {
               보험보상 전문가 그룹
             </span>
             <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-[1.1] mb-8 tracking-tight">
-              <span className="text-[var(--point-color)]">분석의 깊이가</span><br />
+              <span className="text-[var(--point-color)]">보험의 깊이가</span><br />
               보상의 크기를<br />
               결정합니다.
             </h1>
