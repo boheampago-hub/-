@@ -71,8 +71,8 @@ const Footer: React.FC = () => {
           <ul className="space-y-4 text-gray-400">
             <li>대표번호: 010-8144-2942</li>
             <li>이메일: xyman1225@naver.com</li>
-            <li>상담시간: 평일 09:00 - 18:00</li>
-            <li>주말 및 공휴일 휴무</li>
+            <li>상담시간: 24시간 항시가능 </li>
+            <li>주말 및 공휴일 가능</li>
           </ul>
         </div>
       </div>
