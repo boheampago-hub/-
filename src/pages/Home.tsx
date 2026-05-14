@@ -109,9 +109,9 @@ const Home: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { title: '전문성', desc: '15년 경력의 보험사 출신 전문보험 설계사가 직접 분석합니다.', icon: <Award className="w-8 h-8" /> },
-              { title: '투명성', desc: '고객과 소통하며 고객에게 투명하게  맞춤형설계를 합니다.', icon: <CheckCircle2 className="w-8 h-8" /> },
-              { title: '결과 중심', desc: '한번 고객은 끝까지 관리 책임지는  보험설계사가 되겠습니다.', icon: <Users className="w-8 h-8" /> },
+              { title: '전문성', desc: '15년 경력의 보험사 출신 전문보험<br />설계사가 직접 분석합니다.', icon: <Award className="w-8 h-8" /> },
+              { title: '투명성', desc: '고객과 소통하며 고객에게 투명하게<br />맞춤형설계를 합니다.', icon: <CheckCircle2 className="w-8 h-8" /> },
+              { title: '결과 중심', desc: '한번 고객은 끝까지 관리 책임지는<br />보험설계사가 되겠습니다.', icon: <Users className="w-8 h-8" /> },
             ].map((item, i) => (
               <div key={i} className="lux-card p-10 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-[var(--point-color)] flex items-center justify-center mx-auto mb-6">
