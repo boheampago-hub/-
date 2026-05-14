@@ -88,7 +88,7 @@ const Contact: React.FC = () => {
                 <div>
                   <h4 className="text-lg font-bold text-gray-900 mb-1">대표 번호</h4>
                   <p className="text-2xl font-bold text-gray-700">010-8144-2942</p>
-                  <p className="text-sm text-gray-500 mt-1">평일 09:00 - 18:00 (주말/공휴일 휴무)</p>
+                  <p className="text-sm text-gray-500 mt-1">24시간 항시가능 (주말/공휴일 가능)</p>
                 </div>
               </div>
               <div className="flex gap-6 items-start">
