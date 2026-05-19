@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Post, SiteSettings, ContactInquiry } from '../types';
 
+// 데이터 저장/불러오기 엔드포인트 (Netlify Blobs 함수)
+const DATA_ENDPOINT = '/.netlify/functions/site-data';
+
 interface SiteContextType {
   settings: SiteSettings;
   posts: Post[];
@@ -31,17 +34,18 @@ const defaultSettings: SiteSettings = {
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings]   = useState<SiteSettings>(defaultSettings);
-  const [posts, setPosts]         = useState<Post[]>([]);
-  const [inquiries, setInquiries] = useState<ContactInquiry[]>([]);
-  const [isSaving, setIsSaving]   = useState(false);
+  const [settings, setSettings]     = useState<SiteSettings>(defaultSettings);
+  const [posts, setPosts]           = useState<Post[]>([]);
+  const [inquiries, setInquiries]   = useState<ContactInquiry[]>([]);
+  const [isSaving, setIsSaving]     = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [isLoaded, setIsLoaded]     = useState(false);
 
-  // ─── 1. 앱 시작 시 site-data.json 에서 데이터 불러오기 ───────────────────────
+  // ─── 1. 앱 시작 시 Netlify Blobs에서 데이터 불러오기 ─────────────────────────
   useEffect(() => {
-    fetch('/site-data.json')
+    fetch(DATA_ENDPOINT)
       .then((res) => {
-        if (!res.ok) throw new Error('site-data.json 로드 실패');
+        if (!res.ok) throw new Error('데이터 로드 실패');
         return res.json();
       })
       .then((data) => {
@@ -55,9 +59,11 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
           );
         }
         if (data.inquiries) setInquiries(data.inquiries);
+        setIsLoaded(true);
       })
       .catch((err) => {
-        console.warn('site-data.json 로드 실패, 기본값 사용:', err);
+        console.warn('데이터 로드 실패, 기본값 사용:', err);
+        setIsLoaded(true);
       });
   }, []);
 
@@ -67,8 +73,8 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     document.documentElement.style.setProperty('--font-family', settings.fontFamily);
   }, [settings.pointColor, settings.fontFamily]);
 
-  // ─── 3. GitHub 동기화 함수 ────────────────────────────────────────────────────
-  const syncToGitHub = useCallback(
+  // ─── 3. Netlify Blobs에 저장하는 함수 ────────────────────────────────────────
+  const syncToBlobs = useCallback(
     async (
       latestSettings: SiteSettings,
       latestPosts: Post[],
@@ -78,7 +84,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSaveStatus('saving');
 
       try {
-        const response = await fetch('/.netlify/functions/github-sync', {
+        const response = await fetch(DATA_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -92,43 +98,32 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!response.ok) {
           const errData = await response.json();
-          throw new Error(errData.error || '동기화 실패');
+          throw new Error(errData.error || '저장 실패');
         }
 
         setSaveStatus('success');
-        console.log('✅ GitHub 저장 완료 → Netlify 재배포 시작');
+        console.log('✅ Netlify Blobs 저장 완료 → 즉시 반영!');
       } catch (err) {
         setSaveStatus('error');
-        console.error('❌ GitHub 동기화 오류:', err);
+        console.error('❌ 저장 오류:', err);
       } finally {
         setIsSaving(false);
-        // 3초 후 상태 초기화
         setTimeout(() => setSaveStatus('idle'), 3000);
       }
     },
     []
   );
 
-  // ─── 4. 데이터 변경 시 2초 디바운스 후 GitHub에 저장 ─────────────────────────
-  //    (초기 로딩 때는 저장하지 않도록 isLoaded 플래그 사용)
-  const [isLoaded, setIsLoaded] = useState(false);
-
+  // ─── 4. 데이터 변경 시 2초 디바운스 후 Blobs에 저장 ──────────────────────────
   useEffect(() => {
-    // 첫 렌더(기본값 세팅)는 저장 건너뜀
-    if (!isLoaded) {
-      // posts가 로드되면 isLoaded 활성화
-      if (posts.length > 0 || settings.name !== '보험파고') {
-        setIsLoaded(true);
-      }
-      return;
-    }
+    if (!isLoaded) return;
 
     const timer = setTimeout(() => {
-      syncToGitHub(settings, posts, inquiries);
-    }, 2000); // 2초 디바운스: 연속 수정 시 마지막 것만 저장
+      syncToBlobs(settings, posts, inquiries);
+    }, 2000);
 
     return () => clearTimeout(timer);
-  }, [settings, posts, inquiries]);
+  }, [settings, posts, inquiries, isLoaded]);
 
   // ─── 5. 관리자 기능들 ─────────────────────────────────────────────────────────
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
